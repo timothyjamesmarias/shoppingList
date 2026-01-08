@@ -1,0 +1,20 @@
+CREATE TABLE ShoppingList (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    createdAt INTEGER NOT NULL
+);
+
+getAllLists:
+SELECT * FROM ShoppingList ORDER BY createdAt DESC;
+
+getListById:
+SELECT * FROM ShoppingList WHERE id = ?;
+
+insertList:
+INSERT INTO ShoppingList(name, createdAt) VALUES (?, ?);
+
+updateList:
+UPDATE ShoppingList SET name = ? WHERE id = ?;
+
+deleteList:
+DELETE FROM ShoppingList WHERE id = ?;

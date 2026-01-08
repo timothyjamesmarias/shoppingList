@@ -1,0 +1,31 @@
+import kotlin.Boolean;
+
+CREATE TABLE ShoppingListItem (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    listId INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    completed INTEGER AS Boolean NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL,
+    FOREIGN KEY (listId) REFERENCES ShoppingList(id) ON DELETE CASCADE
+);
+
+getItemsByListId:
+SELECT * FROM ShoppingListItem WHERE listId = ? ORDER BY createdAt ASC;
+
+getItemById:
+SELECT * FROM ShoppingListItem WHERE id = ?;
+
+insertItem:
+INSERT INTO ShoppingListItem(listId, name, completed, createdAt) VALUES (?, ?, ?, ?);
+
+updateItem:
+UPDATE ShoppingListItem SET name = ?, completed = ? WHERE id = ?;
+
+toggleCompleted:
+UPDATE ShoppingListItem SET completed = ? WHERE id = ?;
+
+deleteItem:
+DELETE FROM ShoppingListItem WHERE id = ?;
+
+deleteAllItemsInList:
+DELETE FROM ShoppingListItem WHERE listId = ?;
