@@ -6,26 +6,62 @@ CREATE TABLE ShoppingListItem (
     name TEXT NOT NULL,
     completed INTEGER AS Boolean NOT NULL DEFAULT 0,
     createdAt INTEGER NOT NULL,
+    serverId INTEGER,
+    updatedAt INTEGER NOT NULL DEFAULT 0,
+    dirty INTEGER AS Boolean NOT NULL DEFAULT 0,
+    deleted INTEGER AS Boolean NOT NULL DEFAULT 0,
     FOREIGN KEY (listId) REFERENCES ShoppingList(id) ON DELETE CASCADE
 );
 
+-- UI queries (filter out soft-deleted)
 getItemsByListId:
-SELECT * FROM ShoppingListItem WHERE listId = ? ORDER BY createdAt ASC;
+SELECT * FROM ShoppingListItem WHERE listId = ? AND deleted = 0 ORDER BY createdAt ASC;
 
 getItemById:
-SELECT * FROM ShoppingListItem WHERE id = ?;
+SELECT * FROM ShoppingListItem WHERE id = ? AND deleted = 0;
 
+-- Write operations (set dirty + updatedAt)
 insertItem:
-INSERT INTO ShoppingListItem(listId, name, completed, createdAt) VALUES (?, ?, ?, ?);
+INSERT INTO ShoppingListItem(listId, name, completed, createdAt, updatedAt, dirty) VALUES (?, ?, ?, ?, ?, 1);
 
 updateItem:
-UPDATE ShoppingListItem SET name = ?, completed = ? WHERE id = ?;
+UPDATE ShoppingListItem SET name = ?, completed = ?, updatedAt = ?, dirty = 1 WHERE id = ?;
 
 toggleCompleted:
-UPDATE ShoppingListItem SET completed = ? WHERE id = ?;
+UPDATE ShoppingListItem SET completed = ?, updatedAt = ?, dirty = 1 WHERE id = ?;
+
+softDeleteItem:
+UPDATE ShoppingListItem SET deleted = 1, dirty = 1, updatedAt = ? WHERE id = ?;
 
 deleteItem:
 DELETE FROM ShoppingListItem WHERE id = ?;
 
 deleteAllItemsInList:
 DELETE FROM ShoppingListItem WHERE listId = ?;
+
+-- Sync queries
+getDirtyItems:
+SELECT * FROM ShoppingListItem WHERE dirty = 1 AND deleted = 0;
+
+getDeletedItems:
+SELECT * FROM ShoppingListItem WHERE deleted = 1 AND dirty = 1;
+
+getItemByServerId:
+SELECT * FROM ShoppingListItem WHERE serverId = ?;
+
+markItemClean:
+UPDATE ShoppingListItem SET dirty = 0 WHERE id = ?;
+
+setItemServerId:
+UPDATE ShoppingListItem SET serverId = ?, dirty = 0 WHERE id = ?;
+
+insertItemFromServer:
+INSERT INTO ShoppingListItem(listId, name, completed, createdAt, serverId, updatedAt, dirty, deleted) VALUES (?, ?, ?, ?, ?, ?, 0, 0);
+
+updateItemFromServer:
+UPDATE ShoppingListItem SET name = ?, completed = ?, updatedAt = ?, dirty = 0 WHERE serverId = ?;
+
+getServerIdsByListServerId:
+SELECT serverId FROM ShoppingListItem
+WHERE listId = (SELECT id FROM ShoppingList WHERE serverId = ?)
+AND serverId IS NOT NULL AND deleted = 0;

@@ -1,20 +1,56 @@
+import kotlin.Boolean;
+
 CREATE TABLE ShoppingList (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    createdAt INTEGER NOT NULL
+    createdAt INTEGER NOT NULL,
+    serverId INTEGER,
+    updatedAt INTEGER NOT NULL DEFAULT 0,
+    dirty INTEGER AS Boolean NOT NULL DEFAULT 0,
+    deleted INTEGER AS Boolean NOT NULL DEFAULT 0
 );
 
+-- UI queries (filter out soft-deleted)
 getAllLists:
-SELECT * FROM ShoppingList ORDER BY createdAt DESC;
+SELECT * FROM ShoppingList WHERE deleted = 0 ORDER BY createdAt DESC;
 
 getListById:
-SELECT * FROM ShoppingList WHERE id = ?;
+SELECT * FROM ShoppingList WHERE id = ? AND deleted = 0;
 
+-- Write operations (set dirty + updatedAt)
 insertList:
-INSERT INTO ShoppingList(name, createdAt) VALUES (?, ?);
+INSERT INTO ShoppingList(name, createdAt, updatedAt, dirty) VALUES (?, ?, ?, 1);
 
 updateList:
-UPDATE ShoppingList SET name = ? WHERE id = ?;
+UPDATE ShoppingList SET name = ?, updatedAt = ?, dirty = 1 WHERE id = ?;
+
+softDeleteList:
+UPDATE ShoppingList SET deleted = 1, dirty = 1, updatedAt = ? WHERE id = ?;
 
 deleteList:
 DELETE FROM ShoppingList WHERE id = ?;
+
+-- Sync queries
+getDirtyLists:
+SELECT * FROM ShoppingList WHERE dirty = 1 AND deleted = 0;
+
+getDeletedLists:
+SELECT * FROM ShoppingList WHERE deleted = 1 AND dirty = 1;
+
+getListByServerId:
+SELECT * FROM ShoppingList WHERE serverId = ?;
+
+markListClean:
+UPDATE ShoppingList SET dirty = 0 WHERE id = ?;
+
+setListServerId:
+UPDATE ShoppingList SET serverId = ?, dirty = 0 WHERE id = ?;
+
+insertListFromServer:
+INSERT INTO ShoppingList(name, createdAt, serverId, updatedAt, dirty, deleted) VALUES (?, ?, ?, ?, 0, 0);
+
+updateListFromServer:
+UPDATE ShoppingList SET name = ?, updatedAt = ?, dirty = 0 WHERE serverId = ?;
+
+getAllServerIds:
+SELECT serverId FROM ShoppingList WHERE serverId IS NOT NULL AND deleted = 0;
