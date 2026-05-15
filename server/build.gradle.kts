@@ -5,6 +5,10 @@ plugins {
     application
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 application {
     mainClass.set("com.timothymarias.shoppinglist.server.ApplicationKt")
 }

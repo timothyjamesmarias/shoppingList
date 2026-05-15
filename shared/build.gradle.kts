@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
